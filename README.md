@@ -163,9 +163,13 @@ No element found at (0, 0)
 
 ## Features
 
-LunaSVG supports nearly all graphical features outlined in the SVG 1.1 and SVG 1.2 Tiny specifications. The primary exceptions are animation, filters, and scripts. As LunaSVG is designed for static rendering, animation is unlikely to be supported in the future. However, support for filters may be added. It currently handles a wide variety of elements, including:
+LunaSVG supports nearly all graphical features outlined in the SVG 1.1 and SVG 1.2 Tiny specifications. The primary exceptions are animation, scripts, and advanced SVG filters. As LunaSVG is designed for static rendering, animation is unlikely to be supported in the future. It currently handles a wide variety of elements, including:
 
-`<a>` `<circle>` `<clipPath>` `<defs>` `<ellipse>` `<g>` `<image>` `<line>` `<linearGradient>` `<marker>` `<mask>` `<path>` `<pattern>` `<polygon>` `<polyline>` `<radialGradient>` `<rect>` `<stop>` `<style>` `<svg>` `<symbol>` `<text>` `<tspan>` `<use>`
+`<a>` `<circle>` `<clipPath>` `<defs>` `<ellipse>` `<feGaussianBlur>` `<feOffset>` `<filter>` `<g>` `<image>` `<line>` `<linearGradient>` `<marker>` `<mask>` `<path>` `<pattern>` `<polygon>` `<polyline>` `<radialGradient>` `<rect>` `<stop>` `<style>` `<svg>` `<symbol>` `<text>` `<tspan>` `<use>`
+
+### Filters
+
+LunaSVG supports `feGaussianBlur` and `feOffset`, including chained filter primitives through the `in` and `result` attributes. `filterUnits` and `primitiveUnits` support both `userSpaceOnUse` and `objectBoundingBox`. Filter inputs include `SourceGraphic`, `SourceAlpha`, and results from previous primitives. Other filter primitives are not currently supported.
 
 ## Installation
 

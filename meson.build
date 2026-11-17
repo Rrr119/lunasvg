@@ -15,6 +15,7 @@ lunasvg_sources = [
     'source/lunasvg.cpp',
     'source/graphics.cpp',
     'source/svgelement.cpp',
+    'source/svgfilterelement.cpp',
     'source/svggeometryelement.cpp',
     'source/svgpaintelement.cpp',
     'source/svgparser.cpp',
@@ -60,6 +61,13 @@ install_headers('include/lunasvg.h', subdir: 'lunasvg')
 
 if not get_option('examples').disabled()
     subdir('examples')
+endif
+
+if get_option('tests').allowed()
+    lunasvg_tests = executable('lunasvg-tests', 'tests/test_filter.cpp',
+        dependencies: lunasvg_dep
+    )
+    test('lunasvg-tests', lunasvg_tests)
 endif
 
 pkgmod = import('pkgconfig')

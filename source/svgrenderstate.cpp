@@ -1,17 +1,20 @@
 #include "svgrenderstate.h"
+#include "svgfilterelement.h"
 
 namespace lunasvg {
 
 SVGBlendInfo::SVGBlendInfo(const SVGElement* element)
     : m_clipper(element->clipper())
     , m_masker(element->masker())
+    , m_filter(element->filterer())
     , m_opacity(element->opacity())
 {
 }
 
 bool SVGBlendInfo::requiresCompositing(SVGRenderMode mode) const
 {
-    return (m_clipper && m_clipper->requiresMasking()) || (mode == SVGRenderMode::Painting && (m_masker || m_opacity < 1.f));
+    return (m_clipper && m_clipper->requiresMasking())
+        || (mode == SVGRenderMode::Painting && (m_masker || m_filter || m_opacity < 1.f));
 }
 
 bool SVGRenderState::hasCycleReference(const SVGElement* element) const
@@ -29,7 +32,10 @@ void SVGRenderState::beginGroup(const SVGBlendInfo& blendInfo)
 {
     auto requiresCompositing = blendInfo.requiresCompositing(m_mode);
     if(requiresCompositing) {
-        auto boundingBox = m_currentTransform.mapRect(m_element->paintBoundingBox());
+        auto boundingBox = m_currentTransform.mapRect(
+            m_mode == SVGRenderMode::Painting && blendInfo.filter()
+                ? blendInfo.filter()->filterBoundingBox(m_element)
+                : m_element->paintBoundingBox());
         boundingBox.intersect(m_canvas->extents());
         m_canvas = Canvas::create(boundingBox);
     } else {
@@ -49,6 +55,8 @@ void SVGRenderState::endGroup(const SVGBlendInfo& blendInfo)
     }
 
     auto opacity = m_mode == SVGRenderMode::Clipping ? 1.f : blendInfo.opacity();
+    if(m_mode == SVGRenderMode::Painting && blendInfo.filter())
+        blendInfo.filter()->applyFilter(*this);
     if(blendInfo.clipper())
         blendInfo.clipper()->applyClipMask(*this);
     if(m_mode == SVGRenderMode::Painting && blendInfo.masker()) {

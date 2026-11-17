@@ -24,6 +24,7 @@ set(lunasvg_sources
     source/lunasvg.cpp
     source/graphics.cpp
     source/svgelement.cpp
+    source/svgfilterelement.cpp
     source/svggeometryelement.cpp
     source/svglayoutstate.cpp
     source/svgpaintelement.cpp
@@ -37,6 +38,7 @@ set(lunasvg_headers
     include/lunasvg.h
     source/graphics.h
     source/svgelement.h
+    source/svgfilterelement.h
     source/svggeometryelement.h
     source/svglayoutstate.h
     source/svgpaintelement.h
@@ -157,4 +159,9 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/lunasvg.pc"
 option(LUNASVG_BUILD_EXAMPLES "Build examples" ON)
 if(LUNASVG_BUILD_EXAMPLES)
     add_subdirectory(examples)
+endif()
+
+include(CTest)
+if(BUILD_TESTING AND CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    add_subdirectory(tests)
 endif()

@@ -20,11 +20,13 @@ public:
     bool requiresCompositing(SVGRenderMode mode) const;
     const SVGClipPathElement* clipper() const { return m_clipper; }
     const SVGMaskElement* masker() const { return m_masker; }
+    const SVGFilterElement* filter() const { return m_filter; }
     float opacity() const { return m_opacity; }
 
 private:
     const SVGClipPathElement* m_clipper;
     const SVGMaskElement* m_masker;
+    const SVGFilterElement* m_filter;
     const float m_opacity;
 };
 

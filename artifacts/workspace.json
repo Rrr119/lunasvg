@@ -1,0 +1,17 @@
+{
+  "root": "/home/dev/feedback/uid23225",
+  "B": "/home/dev/feedback/uid23225",
+  "sha": "470e78e2953dcf0d4b46322d64eed6ca84156fec",
+  "wslDistro": "Ubuntu-26.04",
+  "source": {
+    "owner": "sammycage",
+    "repo": "lunasvg",
+    "sha": "470e78e2953dcf0d4b46322d64eed6ca84156fec"
+  },
+  "fork": {
+    "owner": "Rrr119",
+    "repo": "lunasvg",
+    "cloneUrl": "https://github.com/Rrr119/lunasvg.git"
+  },
+  "at": "2026-11-17T21:02:04.210Z"
+}

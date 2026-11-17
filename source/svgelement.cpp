@@ -1,6 +1,7 @@
 #include "svgelement.h"
 #include "svgpaintelement.h"
 #include "svggeometryelement.h"
+#include "svgfilterelement.h"
 #include "svgtextelement.h"
 #include "svgproperty.h"
 #include "svglayoutstate.h"
@@ -21,6 +22,9 @@ ElementID elementid(std::string_view name)
         {"clipPath", ElementID::ClipPath},
         {"defs", ElementID::Defs},
         {"ellipse", ElementID::Ellipse},
+        {"feGaussianBlur", ElementID::FeGaussianBlur},
+        {"feOffset", ElementID::FeOffset},
+        {"filter", ElementID::Filter},
         {"g", ElementID::G},
         {"image", ElementID::Image},
         {"line", ElementID::Line},
@@ -108,6 +112,12 @@ std::unique_ptr<SVGElement> SVGElement::create(Document* document, ElementID id)
         return std::make_unique<SVGClipPathElement>(document);
     case ElementID::Marker:
         return std::make_unique<SVGMarkerElement>(document);
+    case ElementID::Filter:
+        return std::make_unique<SVGFilterElement>(document);
+    case ElementID::FeGaussianBlur:
+        return std::make_unique<SVGFEGaussianBlurElement>(document);
+    case ElementID::FeOffset:
+        return std::make_unique<SVGFEOffsetElement>(document);
     case ElementID::Image:
         return std::make_unique<SVGImageElement>(document);
     case ElementID::Style:
@@ -323,7 +333,50 @@ Rect SVGElement::paintBoundingBox() const
     assert(m_paintBoundingBox.isValid());
     if(m_clipper) m_paintBoundingBox.intersect(m_clipper->clipBoundingBox(this));
     if(m_masker) m_paintBoundingBox.intersect(m_masker->maskBoundingBox(this));
+    if(m_filterer) {
+        auto filterBoundingBox = m_filterer->filterBoundingBox(this);
+        if(!filterBoundingBox.isEmpty()) {
+            if(m_paintBoundingBox.isEmpty())
+                m_paintBoundingBox = filterBoundingBox;
+            else
+                m_paintBoundingBox.unite(filterBoundingBox);
+        }
+    }
+    for(const auto& child : m_children) {
+        auto element = toSVGElement(child);
+        if(element == nullptr || element->isHiddenElement())
+            continue;
+        auto filterBoundingBox = element->filteredBoundingBox();
+        if(!filterBoundingBox.isEmpty()) {
+            auto childBoundingBox = element->localTransform().mapRect(filterBoundingBox);
+            if(m_paintBoundingBox.isEmpty())
+                m_paintBoundingBox = childBoundingBox;
+            else
+                m_paintBoundingBox.unite(childBoundingBox);
+        }
+    }
+
     return m_paintBoundingBox;
+}
+
+Rect SVGElement::filteredBoundingBox() const
+{
+    auto boundingBox = Rect::Invalid;
+    if(m_filterer) {
+        auto filterBoundingBox = m_filterer->filterBoundingBox(this);
+        if(!filterBoundingBox.isEmpty())
+            boundingBox = filterBoundingBox;
+    }
+    for(const auto& child : m_children) {
+        auto element = toSVGElement(child);
+        if(element == nullptr || element->isHiddenElement())
+            continue;
+        auto childBoundingBox = element->filteredBoundingBox();
+        if(!childBoundingBox.isEmpty())
+            boundingBox.unite(element->localTransform().mapRect(childBoundingBox));
+    }
+
+    return boundingBox.isValid() ? boundingBox : Rect::Empty;
 }
 
 SVGMarkerElement* SVGElement::getMarker(std::string_view id) const
@@ -347,6 +400,14 @@ SVGMaskElement* SVGElement::getMasker(std::string_view id) const
     auto element = rootElement()->getElementById(id);
     if(element && element->id() == ElementID::Mask)
         return static_cast<SVGMaskElement*>(element);
+    return nullptr;
+}
+
+SVGFilterElement* SVGElement::getFilterer(std::string_view id) const
+{
+    auto element = rootElement()->getElementById(id);
+    if(element && element->id() == ElementID::Filter)
+        return static_cast<SVGFilterElement*>(element);
     return nullptr;
 }
 
@@ -454,6 +515,7 @@ void SVGElement::layoutElement(const SVGLayoutState& state)
     m_paintBoundingBox = Rect::Invalid;
     m_clipper = getClipper(state.clip_path());
     m_masker = getMasker(state.mask());
+    m_filterer = getFilterer(state.filter());
     m_opacity = state.opacity();
 
     m_font_size = state.font_size();
@@ -502,6 +564,9 @@ bool SVGElement::isHiddenElement() const
     case ElementID::Marker:
     case ElementID::ClipPath:
     case ElementID::Mask:
+    case ElementID::Filter:
+    case ElementID::FeGaussianBlur:
+    case ElementID::FeOffset:
     case ElementID::LinearGradient:
     case ElementID::RadialGradient:
     case ElementID::Pattern:
